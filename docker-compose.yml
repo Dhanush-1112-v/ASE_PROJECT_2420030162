@@ -1,0 +1,97 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: acadpredict-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-acadpredict}
+      MYSQL_USER: ${DB_USERNAME:-acaduser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-acadpass}
+    ports:
+      - "${MYSQL_HOST_PORT:-3307}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    networks:
+      - acadpredict-network
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: acadpredict-ai-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; resp = urllib.request.urlopen(\"http://localhost:8000/health\"); exit(0 if resp.status == 200 else 1)'"]
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    networks:
+      - acadpredict-network
+
+  spring-backend:
+    build:
+      context: ./spring-backend
+      dockerfile: Dockerfile
+    container_name: acadpredict-spring-backend
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/${DB_NAME:-acadpredict}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: ${DB_USERNAME:-acaduser}
+      DB_PASSWORD: ${DB_PASSWORD:-acadpass}
+      AI_SERVICE_URL: http://ai-service:8000
+      JWT_SECRET: ${JWT_SECRET:-dGVzdC1zZWNyZXQta2V5LWZvci1qd3QtYXV0aGVudGljYXRpb24tc2VjdXJlLTMyLWJ5dGVzCg==}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      DOCUMENT_STORAGE_DIR: ${DOCUMENT_STORAGE_DIR:-/app/uploads}
+      DEV_PROVISION_ACCOUNTS: ${DEV_PROVISION_ACCOUNTS:-true}
+    volumes:
+      - document_uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8081/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - acadpredict-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8081}
+    container_name: acadpredict-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - spring-backend
+    networks:
+      - acadpredict-network
+
+volumes:
+  mysql_data:
+    driver: local
+  document_uploads:
+    driver: local
+
+networks:
+  acadpredict-network:
+    driver: bridge

@@ -1,0 +1,28 @@
+Classification Report
+==================================================
+
+              precision    recall  f1-score   support
+
+         LOW       0.91      0.87      0.89       330
+      MEDIUM       0.95      0.94      0.95       340
+        HIGH       0.82      0.87      0.84       330
+
+    accuracy                           0.89      1000
+   macro avg       0.90      0.89      0.89      1000
+weighted avg       0.90      0.89      0.89      1000
+
+Accuracy  : 0.8940
+Precision : 0.8961  (weighted)
+Recall    : 0.8940  (weighted)
+F1-score  : 0.8946  (weighted)
+
+Confusion Matrix:
+[[319  21   0]
+ [ 16 287  27]
+ [  0  42 288]]
+
+CV mean accuracy: 0.9070 +/- 0.0092
+
+NOTE: These scores are based on a SYNTHETIC dataset.
+High scores may reflect the deterministic label-generation
+rules and do NOT guarantee real-world performance.

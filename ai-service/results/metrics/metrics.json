@@ -1,0 +1,33 @@
+{
+  "accuracy": 0.894,
+  "precision_weighted": 0.8961,
+  "recall_weighted": 0.894,
+  "f1_weighted": 0.8946,
+  "cv_mean_accuracy": 0.907,
+  "cv_std_accuracy": 0.0092,
+  "confusion_matrix": [
+    [
+      319,
+      21,
+      0
+    ],
+    [
+      16,
+      287,
+      27
+    ],
+    [
+      0,
+      42,
+      288
+    ]
+  ],
+  "labels": [
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+  ],
+  "test_size": 1000,
+  "train_size": 4000,
+  "note": "Scores are based on synthetic data. They do not guarantee real-world accuracy."
+}
